@@ -100,14 +100,16 @@ All keys are loaded from a `.env` file in the project root via `python-dotenv`.
 
 | Variable | Purpose | Where to Get It |
 |---|---|---|
-| `OPENAI_API_KEY` | LLM inference (`gpt-5-mini`) and embeddings (`text-embedding-3-small`) | [platform.openai.com](https://platform.openai.com) |
+| `HF_TOKEN` | Hugging Face Inference API auth for the chat LLM (`HF_MODEL`) | [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) |
+| `HF_MODEL` | Chat model served via HF Inference API (e.g. `Qwen/Qwen2.5-7B-Instruct`) | [huggingface.co/models](https://huggingface.co/models) |
 | `TAVILY_API_KEY` | Web search for current developments and claim verification | [tavily.com](https://tavily.com) |
 | `QDRANT_URL` | Qdrant Cloud endpoint for the vector store | [cloud.qdrant.io](https://cloud.qdrant.io) |
 | `QDRANT_API_KEY` | Authentication for Qdrant Cloud | [cloud.qdrant.io](https://cloud.qdrant.io) |
 
 `.env` file format:
 ```env
-OPENAI_API_KEY=sk-...
+HF_TOKEN=hf_...
+HF_MODEL=Qwen/Qwen2.5-7B-Instruct
 TAVILY_API_KEY=tvly-...
 QDRANT_URL=https://your-cluster.qdrant.io
 QDRANT_API_KEY=your-qdrant-api-key

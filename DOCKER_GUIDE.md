@@ -64,7 +64,8 @@ docker pull <your-dockerhub-username>/<your-image-name>:<tag>
 # Run the container
 docker run -d \
   -p 8501:8501 \
-  -e OPENAI_API_KEY=<your-openai-api-key> \
+  -e HF_TOKEN=<your-huggingface-token> \
+  -e HF_MODEL=<your-huggingface-model> \
   -e TAVILY_API_KEY=<your-tavily-api-key> \
   -e QDRANT_URL=<your-qdrant-url> \
   -e QDRANT_API_KEY=<your-qdrant-api-key> \

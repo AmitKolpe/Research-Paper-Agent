@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 from pathlib import Path
 from uuid import uuid4
@@ -18,15 +19,36 @@ from deepeval.metrics import (
     ContextualRelevancyMetric,
     FaithfulnessMetric,
 )
+from deepeval.models import DeepEvalBaseLLM
 from deepeval.synthesizer import Synthesizer
 from deepeval.synthesizer.config import ContextConstructionConfig
 from deepeval.test_case import LLMTestCase
 
+from backend.llm import get_llm
 from backend.paper_loader import load_document
 from backend.rag_graph import build_graph
 from backend.vector_store import add_paper
 
 load_dotenv()
+
+
+class HFJudgeModel(DeepEvalBaseLLM):
+    """DeepEval judge backed by the Hugging Face Inference API (no OpenAI)."""
+
+    def __init__(self):
+        self.llm = get_llm(max_new_tokens=1024)
+
+    def load_model(self):
+        return self.llm
+
+    def generate(self, prompt: str) -> str:
+        return self.llm.invoke(prompt).content
+
+    async def a_generate(self, prompt: str) -> str:
+        return self.generate(prompt)
+
+    def get_model_name(self) -> str:
+        return f"huggingface:{os.environ.get('HF_MODEL', 'unknown')}"
 
 PDF_PATH            = "documents/Openclaw_Research_Report.pdf"
 GOLDENS_FILE        = Path("goldens.json")
@@ -36,7 +58,7 @@ METRIC_THRESHOLD    = 0.7
 
 
 def generate_goldens() -> list[dict]:
-    synthesizer = Synthesizer()
+    synthesizer = Synthesizer(model=HFJudgeModel())
     goldens = synthesizer.generate_goldens_from_docs(
         document_paths=[PDF_PATH],
         include_expected_output=True,
@@ -82,12 +104,13 @@ def main() -> None:
     docs = load_document(PDF_PATH)
     graph = build_graph(db_path="eval_checkpoints.db")
 
+    judge = HFJudgeModel()
     metrics = [
-        ContextualPrecisionMetric(threshold=METRIC_THRESHOLD, model="gpt-5.4-mini"),
-        ContextualRecallMetric(threshold=METRIC_THRESHOLD, model="gpt-5.4-mini"),
-        ContextualRelevancyMetric(threshold=METRIC_THRESHOLD, model="gpt-5.4-mini"),
-        AnswerRelevancyMetric(threshold=METRIC_THRESHOLD, model="gpt-5.4-mini"),
-        FaithfulnessMetric(threshold=METRIC_THRESHOLD, model="gpt-5.4-mini"),
+        ContextualPrecisionMetric(threshold=METRIC_THRESHOLD, model=judge),
+        ContextualRecallMetric(threshold=METRIC_THRESHOLD, model=judge),
+        ContextualRelevancyMetric(threshold=METRIC_THRESHOLD, model=judge),
+        AnswerRelevancyMetric(threshold=METRIC_THRESHOLD, model=judge),
+        FaithfulnessMetric(threshold=METRIC_THRESHOLD, model=judge),
     ]
 
     test_cases = []
